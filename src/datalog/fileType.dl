@@ -1,0 +1,165 @@
+//=====================================
+// Here we define types
+//=====================================
+.number_type Time // need to do mathematical operation
+.number_type IDX // need to do mathematical operation
+.symbol_type FileID // unique file identifier
+.symbol_type URL  
+
+// metadata
+.number_type CreationTime
+.number_type ModifyTime
+.number_type FileSize
+.symbol_type DataSource
+.symbol_type Permission
+.symbol_type FileType
+.symbol_type Creator
+.symbol_type FilePath
+.symbol_type DataPurpose
+.symbol_type CreationMethod
+.symbol_type DataQuality
+.symbol_type DataStandard
+
+.decl FileMetaData(fileid:FileID, creationtime:CreationTime, modifytime:ModifyTime, filesize:FileSize, datasource:DataSource, permission:Permission, filetype:FileType, creator:Creator, filepath:FilePath, datapurpose:DataPurpose, creationmethod:CreationMethod, dataquality:DataQuality, datastandard:DataStandard)
+.input FileMetaData(IO=file, filename="fact/MetaData.facts", delimiter=",")
+
+// keyword
+.symbol_type IP
+.symbol_type Mail
+.symbol_type OtherURL
+.symbol_type Hash
+.symbol_type Certificate 
+
+// .decl Keyword(ip:IP, mail:Mail, otherurl:OtherURL, hash:Hash, certificate:Certificate)
+.type Keyword = IP | Mail | FilePath | OtherURL | Hash | Certificate
+.decl FileKeyword(fileid:FileID, keyword:Keyword)
+.input FileKeyword(IO=file, filename="fact/Keyword.facts", delimiter=",")
+
+// callable structure
+.symbol_type Button
+.symbol_type Sidebar
+.symbol_type Popup 
+.symbol_type Menu
+.symbol_type Form
+.symbol_type Widget
+.symbol_type StructureName
+
+.type CallableStructure = Button | Sidebar | Popup | Menu | Form | Widget 
+.decl FileCallableStructure(fileid:FileID, callablestructure:CallableStructure, structurename:StructureName)
+.input FileCallableStructure(IO=file, filename="fact/CallableStructure.facts", delimiter=",")
+
+// hash for rawdata (consecutive raw bytes)
+.symbol_type RawData
+.decl FileRawData(fileid:FileID, rawdata:RawData)
+.input FileRawData(IO=file, filename="fact/RawData.facts", delimiter=",")
+
+//===================================================
+// here we define atom relation 
+//===================================================
+
+.symbol_type FuncName
+.symbol_type PermissionType
+
+// network API
+.decl readURL(funcname:FuncName, url:URL)
+.input readURL(IO=file, filename="fact/readURL.facts", delimiter=",")
+.decl writeURL(funcname:FuncName, url:URL)
+.input writeURL(IO=file, filename="fact/writeURL.facts", delimiter=",")
+// .decl readURL(fileid:FileID, url:URL)
+// .decl writeURL(fileid:FileID, url:URL)
+
+// file system API
+.decl readFile(funcname:FuncName, filepath:FilePath)
+.input readFile(IO=file, filename="fact/readFile.facts", delimiter=",")
+.decl writeFile(funcname:FuncName, filepath:FilePath)
+.input writeFile(IO=file, filename="fact/writeFile.facts", delimiter=",")
+
+// access control
+.decl filePermit(filepath1:FilePath, filepath2:FilePath, permissiontype:PermissionType)
+.input filePermit(IO=file, filename="fact/filePermit.facts", delimiter=",")
+.decl urlPermit(url:URL, filepath:FilePath, permissiontype:PermissionType)
+.input urlPermit(IO=file, filename="fact/urlPermit.facts", delimiter=",")
+
+// invocation
+.decl implicitCall(funcname1:FuncName, funcname2:FuncName)
+.input implicitCall(IO=file, filename="fact/implicitCall.facts", delimiter=",")
+.decl binding(structurename:StructureName, funcname:FuncName)
+.input binding(IO=file, filename="fact/binding.facts", delimiter=",")
+.decl structAccess(filepath:FilePath, structurename:StructureName)
+.input structAccess(IO=file, filename="fact/structAccess.facts", delimiter=",")
+
+
+// metadata match
+// .decl FileMetaData(creationtime:CreationTime, modifytime:ModifyTime, filesize:FileSize, datasource:DataSource, permission:Permission, filetype:FileType, creator:Creator, filepath:FilePath, datapurpose:DataPurpose, creationmethod:CreationMethod, dataquality:DataQuality, datastandard:DataStandard)
+match(fileid1, fileid2) :- FileMetaData(fileid1,creationtime,_,_,_,_,_,_,_,_,_,_,_), FileMetaData(fileid2,creationtime,_,_,_,_,_,_,_,_,_,_,_).
+match(fileid1, fileid2) :- FileMetaData(fileid1,_,modifytime,_,_,_,_,_,_,_,_,_,_), FileMetaData(fileid2,_,modifytime,_,_,_,_,_,_,_,_,_,_).
+match(fileid1, fileid2) :- FileMetaData(fileid1,_,_,filesize,_,_,_,_,_,_,_,_,_), FileMetaData(fileid2,_,_,filesize,_,_,_,_,_,_,_,_,_).
+match(fileid1, fileid2) :- FileMetaData(fileid1,_,_,_,datasource,_,_,_,_,_,_,_,_), FileMetaData(fileid2,_,_,_,datasource,_,_,_,_,_,_,_,_).
+match(fileid1, fileid2) :- FileMetaData(fileid1,_,_,_,_,permission,_,_,_,_,_,_,_), FileMetaData(fileid2,_,_,_,_,permission,_,_,_,_,_,_,_).
+match(fileid1, fileid2) :- FileMetaData(fileid1,_,_,_,_,_,_,creator,_,_,_,_,_), FileMetaData(fileid2,_,_,_,_,_,_,creator,_,_,_,_,_).
+match(fileid1, fileid2) :- FileMetaData(fileid1,_,_,_,_,_,_,_,filepath,_,_,_,_), FileMetaData(fileid2,_,_,_,_,_,_,_,filepath,_,_,_,_).
+
+
+// keyword match
+match(fileid1, fileid2) :- FileKeyword(fileid1, keyword), FileKeyword(fileid2, keyword).
+
+// raw data match 
+match(fileid1, fileid2) :- FileRawData(fileid1, rawdata), FileRawData(fileid2, rawdata).
+
+
+// inclusion 
+// contain relation, map fileid to filepath
+
+// we define AllName to avoid redundant contain rules
+.type AllName =  StructureName | FuncName | FilePath
+
+.decl contain(fileid:FileID, filepath:FilePath, allname:AllName)
+.input contain(IO=file, filename="fact/contain.facts", delimiter=",")
+
+.decl define(fileid:FileID, filepath:FilePath, allname:AllName)
+.input define(IO=file, filename="fact/define.facts", delimiter=",")
+
+
+//===================================================
+// here we define inference rules
+//===================================================
+
+.decl Undirected_Match(filepath1:FilePath, filepath2:FilePath)
+.output Undirected_Match(IO=file, filename="output/Undirected_Match.csv", delimiter=",")
+Undirected_Match(filepath1, filepath2) :- match(fileid1, fileid2), contain(fileid1, filepath1, _), contain(fileid2, filepath2, _).
+
+
+.decl DF_ReadURL(filepath:FilePath, url:URL)  
+.output DF_ReadURL(IO=file, filename="output/DF_ReadURL.csv", delimiter=",")
+DF_ReadURL(filepath, url) :- readURL(funcname, url), contain(fileid, filepath, funcname).
+
+
+.decl DF_WriteURL(filepath:FilePath, url:URL)
+.output DF_WriteURL(IO=file, filename="output/DF_WriteURL.csv", delimiter=",")
+DF_WriteURL(filepath, url) :- writeURL(funcname, url), contain(fileid, filepath, funcname). 
+
+
+.decl DF_ReadFile(filepath1:FilePath, filepath2:FilePath)
+.output DF_ReadFile(IO=file, filename="output/DF_ReadFile.csv", delimiter=",")
+DF_ReadFile(filepath1, filepath2) :- ReadFile(funcname, filepath2), contain(fileid, filepath1, funcname). 
+
+
+.decl DF_WriteFile(filepath1:FilePath, filepath2:FilePath)
+.output DF_WriteFile(IO=file, filename="output/DF_WriteFile.csv", delimiter=",")
+DF_WriteFile(filepath1, filepath2) :- WriteFile(funcname, filepath2), contain(fileid, filepath1, funcname). 
+
+
+.decl CTRL_Exec(filepath1:FilePath, filepath2:FilePath)
+.output CTRL_Exec(IO=file, filename="output/CTRL_Exec.csv", delimiter=",")
+CTRL_Exec(filepath1, filepath2) :- contain(fileid1, filepath1, funcname), define(fileid2, filepath2, funcname).
+CTRL_Exec(filepath1, filepath2) :- implicitCall(funcname1, funcname2), contain(fileid1, filepath1, funcname1), define(fileid2, filepath2, funcname2). 
+CTRL_Exec(filepath1, filepath2) :- binding(structurename, funcname), contain(fileid1, filepath1, structurename), define(fileid2, filepath2, funcname). 
+CTRL_Exec(filepath1, filepath2) :- structAccess(filepath1, structurename), contain(fileid2, filepath2, structurename). 
+
+
+.decl CTRL_Access(filepath1:FilePath, filepath2:FilePath)
+.output CTRL_Access(IO=file, filename="output/CTRL_Access.csv", delimiter=",")
+CTRL_Access(filepath1, filepath2, permissiontype) :- filePermit(filepath1, filepath2, permissiontype).
+CTRL_Access(url, filepath, permissiontype) :- urlPermit(url, filepath, permissiontype).
+
+// match of application type and file type
